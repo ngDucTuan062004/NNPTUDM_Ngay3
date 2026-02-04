@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+        }
+        .table-hover tbody tr {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #e9ecef;
+            transform: scale(1.01);
+        }
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .tooltip-inner {
+            max-width: 300px;
+            text-align: left;
+        }
+        .sort-icon {
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 0.8em;
+        }
+        .sort-icon:hover {
+            color: #0d6efd;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .controls-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .btn-group-sm > .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-primary mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-cart4"></i> Product Dashboard
+            </span>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <div class="row g-3 align-items-center">
+                <!-- Search -->
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm theo title...">
+                    </div>
+                </div>
+                
+                <!-- Items per page -->
+                <div class="col-md-2">
+                    <select class="form-select" id="itemsPerPage">
+                        <option value="5">5 / trang</option>
+                        <option value="10" selected>10 / trang</option>
+                        <option value="20">20 / trang</option>
+                    </select>
+                </div>
+                
+                <!-- Export CSV -->
+                <div class="col-md-2">
+                    <button class="btn btn-success w-100" id="exportCsvBtn">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+                    </button>
+                </div>
+                
+                <!-- Create Product -->
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#createModal">
+                        <i class="bi bi-plus-circle"></i> Tạo mới
+                    </button>
+                </div>
+                
+                <!-- Total count -->
+                <div class="col-md-2">
+                    <div class="alert alert-info mb-0 py-2 text-center">
+                        Tổng: <span id="totalCount">0</span> sản phẩm
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading" id="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Đang tải dữ liệu...</p>
+        </div>
+
+        <!-- Table -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>
+                                    Title 
+                                    <span class="sort-icon" data-sort="title" title="Sắp xếp">
+                                        <i class="bi bi-arrow-down-up"></i>
+                                    </span>
+                                </th>
+                                <th>
+                                    Price 
+                                    <span class="sort-icon" data-sort="price" title="Sắp xếp">
+                                        <i class="bi bi-arrow-down-up"></i>
+                                    </span>
+                                </th>
+                                <th>Category</th>
+                                <th>Images</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTableBody">
+                            <!-- Data will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center" id="pagination">
+                <!-- Pagination will be inserted here -->
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chi tiết sản phẩm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detailModalBody">
+                    <!-- Detail content will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" id="editBtn">
+                        <i class="bi bi-pencil"></i> Chỉnh sửa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square"></i> Chỉnh sửa sản phẩm
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        <strong>Chú ý:</strong> Thay đổi sẽ được cập nhật vào API. Tất cả các trường đều bắt buộc.
+                    </div>
+                    <form id="editForm">
+                        <input type="hidden" id="editProductId">
+                        <div class="mb-3">
+                            <label for="editTitle" class="form-label">
+                                Title <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="editTitle" 
+                                   placeholder="Nhập tên sản phẩm..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPrice" class="form-label">
+                                Price (USD) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="editPrice" 
+                                   placeholder="0.00" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDescription" class="form-label">
+                                Description <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="editDescription" rows="3" 
+                                      placeholder="Mô tả chi tiết sản phẩm..." required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCategoryId" class="form-label">
+                                Category ID <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="editCategoryId" required>
+                                <option value="">-- Chọn Category --</option>
+                                <option value="1">1 - Clothes</option>
+                                <option value="2">2 - Electronics</option>
+                                <option value="3">3 - Furniture</option>
+                                <option value="4">4 - Shoes</option>
+                                <option value="5">5 - Miscellaneous</option>
+                                <option value="6">6 - Others</option>
+                            </select>
+                            <small class="text-muted">Chọn danh mục phù hợp cho sản phẩm</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editImages" class="form-label">
+                                Images URLs (optional)
+                            </label>
+                            <textarea class="form-control" id="editImages" rows="2"
+                                      placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"></textarea>
+                            <small class="text-muted">
+                                Nhập URL hình ảnh, phân cách bằng dấu phẩy.<br>
+                                Ví dụ: https://placehold.co/600x400, https://picsum.photos/640/640
+                            </small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Hủy
+                    </button>
+                    <button type="button" class="btn btn-warning" id="saveEditBtn">
+                        <i class="bi bi-check-circle"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Modal -->
+    <div class="modal fade" id="createModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle"></i> Tạo sản phẩm mới
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Lưu ý:</strong> Tất cả các trường đều bắt buộc. Category ID thường từ 1-5.
+                    </div>
+                    <form id="createForm">
+                        <div class="mb-3">
+                            <label for="createTitle" class="form-label">
+                                Title <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="createTitle" 
+                                   placeholder="Nhập tên sản phẩm..." required>
+                            <small class="text-muted">Ví dụ: New Balance Sneakers</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createPrice" class="form-label">
+                                Price (USD) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="createPrice" 
+                                   placeholder="0.00" step="0.01" min="0.01" required>
+                            <small class="text-muted">Ví dụ: 99.99</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createDescription" class="form-label">
+                                Description <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="createDescription" rows="3" 
+                                      placeholder="Mô tả chi tiết sản phẩm..." required></textarea>
+                            <small class="text-muted">Ví dụ: High-quality running shoes with excellent cushioning...</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createCategoryId" class="form-label">
+                                Category ID <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="createCategoryId" required>
+                                <option value="">-- Chọn Category --</option>
+                                <option value="1">1 - Clothes</option>
+                                <option value="2">2 - Electronics</option>
+                                <option value="3">3 - Furniture</option>
+                                <option value="4">4 - Shoes</option>
+                                <option value="5">5 - Miscellaneous</option>
+                                <option value="6">6 - Others</option>
+                            </select>
+                            <small class="text-muted">Chọn danh mục phù hợp cho sản phẩm</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createImages" class="form-label">
+                                Images URLs (optional)
+                            </label>
+                            <textarea class="form-control" id="createImages" rows="2"
+                                      placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"></textarea>
+                            <small class="text-muted">
+                                Nhập URL hình ảnh, phân cách bằng dấu phẩy. Nếu để trống sẽ dùng ảnh mặc định.<br>
+                                Ví dụ: https://placehold.co/600x400, https://picsum.photos/640/640
+                            </small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Hủy
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveCreateBtn">
+                        <i class="bi bi-check-circle"></i> Tạo sản phẩm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Main JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
